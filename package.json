@@ -6,17 +6,14 @@
     "prebuild": "barrelsby -d src/lib -D -q",
     "build": "npx tsc",
     "postbuild": "npm run assets && npm run types",
-    "assets": "copyfiles -a -u 1 src/bin/assets/**/*.template dist",
+    "assets": "copyfiles -a -u 1 src/bin/assets/**/*.template.* dist",
     "types": "copyfiles -f ./src/types.d.ts dist",
     "watch": "npx tsc-watch --onSuccess 'npm run postbuild'",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint -c .eslintrc.json src/"
   },
   "main": "./dist/lib/index.js",
-  "files": [
-    "dist/",
-    "misc/"
-  ],
+  "files": ["dist/", "misc/"],
   "types": "dist/lib/index.d.ts",
   "bin": {
     "realtimate": "./dist/bin/index.js"
