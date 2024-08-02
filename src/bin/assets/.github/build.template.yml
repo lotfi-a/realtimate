@@ -55,6 +55,16 @@ jobs:
         app: ${{ fromJson(needs.inventory.outputs.matrix) }}
     steps:
       - run: echo env=${{ (needs.inventory.outputs.pr && format('pr-{0}',needs.inventory.outputs.pr)) || needs.inventory.outputs.stage }} >> $GITHUB_ENV
+      - run: echo app_name=${{ (needs.inventory.outputs.pr && format('{0}-pr-{1}',matrix.app.name,needs.inventory.outputs.pr)) || matrix.app.name }} >> $GITHUB_ENV
+
+      - run: echo atlas_environment="testing" >> $GITHUB_ENV
+      - name: 'replace atlas env if on main branch'
+        if: env.env == 'main'
+        run: echo atlas_environment="production" >> $GITHUB_ENV
+      - name: 'replace atlas env if on main branch'
+        if: env.env == 'develop'
+        run: echo atlas_environment="development" >> $GITHUB_ENV
+
       - name: Generate a token
         id: generate_token
         uses: tibdex/github-app-token@v1.7.0
@@ -81,44 +91,42 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        run: APP=${{matrix.app.name}} npm run build
+      - name: Create App and set APP_ID if not exists
+        if: ${{!env.APP_ID}}
+        run: |
+          echo APP_ID=$(realm-cli apps create --project ${{secrets.REALM_PROJECT}} -n "${{env.app_name}}" -l "DE-FF" -f "json" -d "LOCAL" -y | jq ".doc.client_app_id | select( . != null )" -r -j) >> $GITHUB_ENV
 
-      - name: Copy realm_config.json
+      - name: set Github var
         env:
-          PREFIX: ${{ env.env }}
-          APP_ID: ${{ env.APP_ID }}
-        run: envsubst < inventory/template/${{matrix.app.name}}.json > apps/${{matrix.app.name}}/realm_config.json
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+        run: gh variable set ${{matrix.app.name}} --body "${{ env.APP_ID }}" -e "${{ env.env }}"
 
-      - name: Copy realm_config.json (override with ${{ env.env }})
+      - name: Create realm_config.json
         continue-on-error: true
         env:
-          PREFIX: ${{ env.env }}
+          APP_NAME: ${{ env.app_name }}
           APP_ID: ${{ env.APP_ID }}
-        run: envsubst < inventory/${{ env.env }}/${{matrix.app.name}}.json > apps/${{matrix.app.name}}/realm_config.json
+          ENVIRONMENT: ${{ env.atlas_environment }}
+        run: envsubst < .github/workflows/root_config.template.json > apps/${{matrix.app.name}}/realm_config.json
+
+      - name: Copy realm_config to root_config.json
+        continue-on-error: true
+        run: cp apps/${{matrix.app.name}}/realm_config.json apps/${{matrix.app.name}}/root_config.json
+
+      - name: Build
+        run: APP=${{matrix.app.name}} npm run build:app
 
       - run: mkdir -p apps/${{matrix.app.name}}/hosting/files/
-      
       - name: update hosting file
         continue-on-error: true
         env:
           APP_ID: ${{ env.APP_ID }}
         run: envsubst < apps/${{matrix.app.name}}/hosting/config.json > apps/${{matrix.app.name}}/hosting/config.json
-      
-      - name: copy package.json
-        run: cp package.json apps/${{matrix.app.name}}/functions/package.json
 
       - name: Push to realm
         id: push_app
         run: realm-cli push -y --project ${{secrets.REALM_PROJECT}} -s --include-package-json
         continue-on-error: true
-        working-directory: apps/${{matrix.app.name}}
-
-      - name: Push app-id to env
-        if: ${{!env.APP_ID}}
-        env:
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
-        run: gh variable set ${{matrix.app.name}} --body $(cat realm_config.json | jq ".app_id" -r) -e "${{ env.env }}"
         working-directory: apps/${{matrix.app.name}}
 
       - name: Throw Error

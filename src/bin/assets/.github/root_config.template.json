@@ -1,0 +1,9 @@
+{
+  "app_id": "${APP_ID}",
+  "config_version": 20210101,
+  "name": "${APP_NAME}",
+  "location": "DE-FF",
+  "provider_region": "gcp-europe-west1",
+  "deployment_model": "LOCAL",
+  "environment": "${ENVIRONMENT}"
+}
