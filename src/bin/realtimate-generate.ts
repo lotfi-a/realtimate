@@ -6,39 +6,16 @@ execSync('npm install atlas-app-services-cli');
 
 const appName = process.argv.pop();
 const appDir = process.cwd() + '/apps/' + appName;
-const inventoryDir = process.cwd() + '/inventory';
 const sourceDir = process.cwd() + '/src/' + appName;
 
-[appDir, inventoryDir, sourceDir].forEach(dir => fs.mkdirSync(dir, {recursive: true}));
-
-[{folder: 'develop', env: 'qa'}, {folder:'main', env: 'production'}, {folder: 'template', env: 'testing', prefix: '${PREFIX}'}].forEach(({folder, env, prefix})  => {
-  prefix ??= folder;
-  fs.mkdirSync(inventoryDir + '/' + folder, { recursive: true });
-  fs.writeFileSync(
-    `${inventoryDir}/${folder}/${appName}.json`,
-    JSON.stringify(
-      {
-        app_id: '${APP_ID}',
-        config_version: 20210101,
-        name: `${prefix}-${appName}`,
-        location: 'DE-FF',
-        provider_region: 'gcp-europe-west1',
-        deployment_model: 'LOCAL',
-        environment: env,
-      },
-      null,
-      2
-    )
-  );
-});
-
+[appDir,sourceDir].forEach(dir => fs.mkdirSync(dir, {recursive: true}));
 
 execSync(`npx appservices apps init -n ${appName}` , {cwd: appDir});
 ['realm_config.json', '.mdb'].forEach(file => fs.rmSync(`${appDir}/${file}`, {recursive: true}));
 
 fs.writeFileSync(
   `${process.cwd()}/src/${appName}/example.ts`,
-  fs.readFileSync(`${__dirname}/assets/example.template`)
+  fs.readFileSync(`${__dirname}/assets/example.template.ts`)
 );
 
 // if github action, then update apps.json

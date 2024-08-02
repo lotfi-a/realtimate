@@ -28,11 +28,11 @@ if (!fs.existsSync(`${rootDir}/.github/workflows/apps.json`)) {
 
 fs.writeFileSync(
   `${rootDir}/tsconfig.json`,
-  fs.readFileSync(`${__dirname}/assets/tsconfig.template`).toString()
+  fs.readFileSync(`${__dirname}/assets/tsconfig.template.json`).toString()
 );
 // fs.writeFileSync(
 //   `${rootDir}/turbo.json`,
-//   fs.readFileSync(`${__dirname}/assets/turbo.template`).toString()
+//   fs.readFileSync(`${__dirname}/assets/turbo.template.json`).toString()
 // );
 
 execSync('npm install typescript mongodb body-parser', { stdio: 'inherit' });
