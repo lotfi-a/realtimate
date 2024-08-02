@@ -86,6 +86,17 @@ type request = {
   
 };
 
+type authEvent = {
+  user: {
+    id: string;
+    name: string;
+  };
+  time: number;
+  operationType: string;
+  providers: Record<string, string>;
+};
+
+
 type callableFunction<T = unknown,V = unknown> = (...args: V[]) => Promise<T> | T;
 type httpFunction = callableFunction<void, [request, response]>;
 
@@ -96,8 +107,6 @@ type Realm ={
   callableFunction: callableFunction;
   httpFunction: httpFunction;
 };
-
-
 
 declare module 'context' {
   global {
