@@ -11,7 +11,7 @@ const sourceDir = process.cwd() + '/src/' + appName;
 [appDir,sourceDir].forEach(dir => fs.mkdirSync(dir, {recursive: true}));
 
 execSync(`npx appservices apps init -n ${appName}` , {cwd: appDir});
-['realm_config.json', '.mdb'].forEach(file => fs.rmSync(`${appDir}/${file}`, {recursive: true}));
+['root_config.json', '.mdb'].forEach(file => fs.rmSync(`${appDir}/${file}`, {recursive: true}));
 
 fs.writeFileSync(
   `${process.cwd()}/src/${appName}/example.ts`,
